@@ -1,10 +1,8 @@
 const chatBody = document.getElementById('chatBody')
-const openButton = document.getElementById('toggleButton')
-const chatbotWindow = document.getElementById('chatbotWindow');
-
-let socket
-let isFirstWord = false
-let botMessage
+const timezone = new Intl.DateTimeFormat('en-Us', {timeZoneName: 'long'}).resolvedOptions().timeZone;
+console.log(timezone)
+let chatId = localStorage.getItem('chat_id')
+console.log(chatId)
 
 window.addEventListener('load', adjustChatBodyHeight);
 window.addEventListener('resize', adjustChatBodyHeight);
@@ -25,46 +23,52 @@ function adjustChatBodyHeight() {
     chatBody.style.height = viewportHeight + 'px';
 }
 
-function openChatBotWindow() {
-    let lastScrollHeight = chatBody.scrollHeight;
-    const uuid = generateUUID()
-    socket = new WebSocket(`ws://127.0.0.1:8000/ws/${uuid}`);
-    socket.onclose = (event) => console.log('WebSocket disconnected', event);
-    socket.onerror = (error) => {
-        alert('Something was wrong. Try again later.')
-        window.location.reload()
-    };
-    socket.onmessage = (event) => {
-        if (chatBody.scrollHeight > lastScrollHeight) {
-            chatBody.scrollTop = chatBody.scrollHeight;
-            lastScrollHeight = chatBody.scrollHeight;
+async function getChatId() {
+    const res = await fetch(
+        "http://localhost:8000/chat/create", {
+            method: 'GET',
         }
-        if (!isFirstWord) {
-            isFirstWord = true
-            createNewMessage(event.data, 'bot')
-            const botMessages = document.querySelectorAll('.bot_message');
-            botMessage = botMessages[botMessages.length - 1];
-        } else {
-            const aiMessage = event.data
-            if (aiMessage.startsWith('ENRICHED:')) {
-                console.log(aiMessage)
-                botMessage.innerHTML = aiMessage.substring(9)
-                enrichAIResponse(botMessage)
-            } else {
-                botMessage.innerHTML = aiMessage
-            }
+    )
+    if (res.status === 307) {
+        window.location = 'http://localhost:8000/login'
+    }
+    const result = await res.json()
+    if (result.redirect) {
+        window.location = result.redirect;
+        return null;
+    }
+    console.log(result)
+    return result['chat_id']
+}
+
+async function restoreMessageHistory(chatId) {
+    const res = await fetch(
+        `http://localhost:8000/message/history/${chatId}`, {
+            method: 'GET',
+        }
+    )
+    if (res.status === 307) {
+        window.location = 'http://localhost:8000/login'
+    }
+    const result = await res.json()
+    console.log(result)
+    return result
+}
+
+async function init() {
+    if (!chatId) {
+        chatId = await getChatId()
+        localStorage.setItem('chat_id', chatId)
+    } else {
+        const messages = await restoreMessageHistory(chatId)
+        if (messages && messages.length > 0) {
+            messages.forEach((message) => {
+                createNewMessage(message['content'], message['role'])
+            })
         }
     }
 }
 
-function closeChatBotWindow() {
-    socket.close()
-    chatbotWindow.style.visibility = 'hidden'
-    openButton.style.display = 'block'
-}
-
-openButton.addEventListener('click', function () {
-    chatbotWindow.style.visibility = "visible";
-    openButton.style.display = 'none'
-    openChatBotWindow();
-});
+(async function () {
+    await init()
+})();

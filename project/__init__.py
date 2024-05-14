@@ -1,8 +1,14 @@
+import os
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from starlette.staticfiles import StaticFiles
 
 from project.database import engine
+
+load_dotenv()
 
 
 def create_app() -> FastAPI:
@@ -11,8 +17,8 @@ def create_app() -> FastAPI:
     from project.bot import bot_router
     app.include_router(bot_router, tags=['bot'])
 
-    from project.ws import ws_router
-    app.include_router(ws_router, tags=['ws'])
+    from project.users import user_router
+    app.include_router(user_router, tags=['users    '])
 
     app.mount('/static', StaticFiles(directory="static"), name="static")
 
@@ -25,4 +31,9 @@ def create_app() -> FastAPI:
 
     )
 
+    app.add_middleware(
+        SessionMiddleware,
+        secret_key=os.getenv('SECRET'),
+        max_age=100
+    )
     return app

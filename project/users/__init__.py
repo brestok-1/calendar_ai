@@ -1,5 +1,7 @@
 from fastapi import APIRouter
 
-ws_router = APIRouter()
+user_router = APIRouter(
+    prefix=''
+)
 
 from . import views

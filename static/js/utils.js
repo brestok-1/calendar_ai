@@ -6,7 +6,8 @@ function createNewMessage(text, type) {
     message.className = 'message'
     let content = document.createElement('div')
     content.style.whiteSpace = "pre-line"
-    if (type === 'bot') {
+    console.log(type)
+    if (type === 'assistant') {
         content.className = 'bot_message mt-4 py-3 px-4 rounded-4 w-75 ms-3'
     } else {
         content.className = 'user_message mt-4 py-3 px-4 rounded-4 w-75 me-3'
@@ -16,28 +17,30 @@ function createNewMessage(text, type) {
     chatBody.appendChild(message)
 }
 
-function sendMessageToServer() {
+async function sendMessageToServer() {
     const userQuery = textInput.value;
     if (userQuery.length === 0) {
         return
     }
     createNewMessage(userQuery, 'user')
-    socket.send(JSON.stringify({'query': userQuery, 'country': "Undefined"}));
     textInput.value = ''
-    isFirstWord = false
+    const data = {
+        "query": userQuery,
+        "chat_id": parseInt(chatId),
+        'timezone': timezone
+    }
+    const res = await fetch(
+        "http://localhost:8000/message/create", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        }
+    )
+    const result = await res.json();
+    createNewMessage(result['response'], 'assistant')
     chatBody.scrollTop = chatBody.scrollHeight;
-}
-
-function generateUUID() {
-    const arr = new Uint8Array(16);
-    window.crypto.getRandomValues(arr);
-
-    arr[6] = (arr[6] & 0x0f) | 0x40;
-    arr[8] = (arr[8] & 0x3f) | 0x80;
-
-    return ([...arr].map((b, i) =>
-        (i === 4 || i === 6 || i === 8 || i === 10 ? "-" : "") + b.toString(16).padStart(2, "0")
-    ).join(""));
 }
 
 textInput.addEventListener("keydown", function (event) {
@@ -48,40 +51,3 @@ textInput.addEventListener("keydown", function (event) {
 
 sendButton.addEventListener("click", sendMessageToServer);
 
-
-function enrichAIResponse(botMessageElement) {
-    const links = botMessageElement.querySelectorAll('.extraDataLink');
-
-    links.forEach(link => {
-        const tooltip = link.nextElementSibling;
-        link.addEventListener('mouseenter', function () {
-            tooltip.style.display = 'block';
-            const tooltipWidth = parseInt(link.offsetWidth) * 2
-            tooltip.style.width = tooltipWidth + 'px'
-
-            const tooltipImg = tooltip.querySelector('.tooltip-img')
-            if (tooltipImg) {
-                tooltipImg.width = tooltipWidth - 16
-            }
-            const linkRect = this.getBoundingClientRect();
-            if (linkRect.top < tooltip.offsetHeight + 4) {
-                tooltip.style.top = (window.scrollY + linkRect.bottom + 4) + 'px';
-            } else {
-                tooltip.style.top = (window.scrollY + linkRect.top - tooltip.offsetHeight - 4) + 'px';
-            }
-            tooltip.style.left = (linkRect.left + (linkRect.width / 2) - (tooltipWidth / 2)) + 'px';
-        });
-
-        link.addEventListener('mouseleave', function () {
-            setTimeout(() => {
-                if (!tooltip.matches(':hover')) {
-                    tooltip.style.display = 'none';
-                }
-            }, 300)
-        });
-
-        tooltip.addEventListener('mouseleave', function () {
-            this.style.display = 'none';
-        });
-    });
-}
