@@ -31,7 +31,7 @@ class BaseConfig:
         'https://www.googleapis.com/auth/userinfo.email',
         'openid'
     ]
-    PROMPTS = ALL_PROMPTS
+    PROMPTS: dict[str, str] = ALL_PROMPTS
 
 
 class DevelopmentConfig(BaseConfig):

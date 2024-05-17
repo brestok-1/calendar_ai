@@ -1,5 +1,6 @@
 const chatBody = document.getElementById('chatBody')
 const timezone = new Intl.DateTimeFormat('en-Us', {timeZoneName: 'long'}).resolvedOptions().timeZone;
+
 console.log(timezone)
 let chatId = localStorage.getItem('chat_id')
 console.log(chatId)

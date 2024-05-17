@@ -18,7 +18,10 @@ def create_app() -> FastAPI:
     app.include_router(bot_router, tags=['bot'])
 
     from project.users import user_router
-    app.include_router(user_router, tags=['users    '])
+    app.include_router(user_router, tags=['users'])
+
+    from project.ws import ws_router
+    app.include_router(ws_router, tags=['ws'])
 
     app.mount('/static', StaticFiles(directory="static"), name="static")
 

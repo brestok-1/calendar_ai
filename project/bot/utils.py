@@ -16,4 +16,8 @@ async def update_message_history(role: str, content: str, chat_id: int, session:
 
 def format_datetime(iso_str):
     dt = datetime.fromisoformat(iso_str)
-    return dt.strftime('%Y-%m-%d %H:%M:%S')
+    return dt.strftime('%Y-%m-%d %H:%M')
+
+
+async def collect_all_events_from_past_year():
+    pass

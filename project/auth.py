@@ -14,7 +14,7 @@ from project.users.models import User
 async def get_current_user(request: Request) -> tuple | RedirectResponse:
     credentials_json = request.session.get('credentials')
     if not credentials_json:
-        raise HTTPException(status_code=307, detail="/users/login")
+        return RedirectResponse("/login")
 
     credentials_data = json.loads(credentials_json)
     credentials = Credentials.from_authorized_user_info(credentials_data)

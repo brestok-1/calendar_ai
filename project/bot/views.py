@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime
 
 from fastapi import Depends
@@ -21,7 +20,9 @@ template = Jinja2Templates(directory='project/bot/templates')
 
 
 @bot_router.get('/', name='main')
-async def main(request: Request):
+async def main(request: Request, user_data=Depends(get_current_user)):
+    if isinstance(user_data, RedirectResponse):
+        return user_data
     return template.TemplateResponse("home.html", {'request': request})
 
 

@@ -31,6 +31,15 @@ async def add_new_event(data: dict, credentials: Credentials, timezone: str) -> 
         print(e)
 
 
+async def send_planned_events_to_google_calendar(events: list[dict], credentials: Credentials) -> None:
+    service = build('calendar', 'v3', credentials=credentials)
+    for event in events:
+        try:
+            service.events().insert(calendarId='primary', body=event).execute()
+        except Exception as e:
+            print(e)
+
+
 async def show_events(data: dict, credentials: Credentials) -> str:
     service = build('calendar', 'v3', credentials=credentials)
     params = {
@@ -79,4 +88,3 @@ async def delete_event(data: dict, credentials: Credentials) -> None:
     for event in events:
         event_id = event['id']
         service.events().delete(calendarId='primary', eventId=event_id).execute()
-
