@@ -7,6 +7,7 @@ from fastapi.requests import Request
 from googleapiclient.discovery import build
 from sqlalchemy import select
 
+from project.config import settings
 from project.database import get_async_session
 from project.users.models import User
 
@@ -21,7 +22,7 @@ async def get_current_user(request: Request) -> tuple | RedirectResponse:
 
     if not credentials.valid:
         if credentials.expired and credentials.refresh_token:
-            credentials.refresh(request)
+            return RedirectResponse("/login")
 
     service = build('oauth2', 'v2', credentials=credentials)
     user_info = service.userinfo().get().execute()

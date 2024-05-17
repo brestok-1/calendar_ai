@@ -1,9 +1,6 @@
 const chatBody = document.getElementById('chatBody')
 const timezone = new Intl.DateTimeFormat('en-Us', {timeZoneName: 'long'}).resolvedOptions().timeZone;
-
-console.log(timezone)
-let chatId = localStorage.getItem('chat_id')
-console.log(chatId)
+let socket
 
 window.addEventListener('load', adjustChatBodyHeight);
 window.addEventListener('resize', adjustChatBodyHeight);
@@ -24,48 +21,26 @@ function adjustChatBodyHeight() {
     chatBody.style.height = viewportHeight + 'px';
 }
 
-async function getChatId() {
-    const res = await fetch(
-        "http://localhost:8000/chat/create", {
-            method: 'GET',
-        }
-    )
-    if (res.status === 307) {
-        window.location = 'http://localhost:8000/login'
-    }
-    const result = await res.json()
-    if (result.redirect) {
-        window.location = result.redirect;
-        return null;
-    }
-    console.log(result)
-    return result['chat_id']
-}
-
-async function restoreMessageHistory(chatId) {
-    const res = await fetch(
-        `http://localhost:8000/message/history/${chatId}`, {
-            method: 'GET',
-        }
-    )
-    if (res.status === 307) {
-        window.location = 'http://localhost:8000/login'
-    }
-    const result = await res.json()
-    console.log(result)
-    return result
-}
 
 async function init() {
-    if (!chatId) {
-        chatId = await getChatId()
-        localStorage.setItem('chat_id', chatId)
-    } else {
-        const messages = await restoreMessageHistory(chatId)
-        if (messages && messages.length > 0) {
-            messages.forEach((message) => {
-                createNewMessage(message['content'], message['role'])
-            })
+    console.log(credentials)
+    socket = new WebSocket(`ws://127.0.0.1:8000/ws/prediction/${timezone}`)
+    socket.onopen = (event) => {
+        socket.send(JSON.stringify({
+            "type": "initialization",
+            "credentials": credentials
+        }))
+    }
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data)
+        const message_type = data['type']
+        let assistantMessage = data['data']['text']
+        if (message_type === 'messaging') {
+            createNewMessage(assistantMessage, 'assistant')
+        } else if (message_type === 'suggestion') {
+            const events = data['data']['events']
+            createNewMessage(assistantMessage, 'assistant')
+            createNewMessage(events, 'assistant')
         }
     }
 }

@@ -24,22 +24,10 @@ async function sendMessageToServer() {
     }
     createNewMessage(userQuery, 'user')
     textInput.value = ''
-    const data = {
-        "query": userQuery,
-        "chat_id": parseInt(chatId),
-        'timezone': timezone
-    }
-    const res = await fetch(
-        "http://localhost:8000/message/create", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        }
-    )
-    const result = await res.json();
-    createNewMessage(result['response'], 'assistant')
+    socket.send(JSON.stringify({
+        "type": "searching",
+        "text": userQuery
+    }))
     chatBody.scrollTop = chatBody.scrollHeight;
 }
 

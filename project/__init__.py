@@ -37,6 +37,6 @@ def create_app() -> FastAPI:
     app.add_middleware(
         SessionMiddleware,
         secret_key=os.getenv('SECRET'),
-        max_age=100
+        max_age=10800
     )
     return app

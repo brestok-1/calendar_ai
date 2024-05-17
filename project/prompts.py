@@ -108,7 +108,7 @@ The user wants to forecast their future events to record them in Google Calendar
 
 ## Task
 
-Generate questions that will help you learn about the user's life. The questions should be designed to gather data that can be used to forecast future events. Ask about:
+Generate question that will help you learn about the user's life. The questions should be designed to gather data that can be used to forecast future events. Ask about:
 - Work or study commitments
 - Personal events
 - Travel and trips
@@ -120,7 +120,8 @@ Generate questions that will help you learn about the user's life. The questions
 <INST>
 
 1. The questions should be clear and specific.
-2. Structure your questions so that the user shares as much information as possible. Provide examples and ask for exact dates and events.
+2. Ask only one question per response.
+3. Structure your questions so that the user shares as much information as possible. Provide examples and ask for exact dates and events.
 
 </INST>""",
     "analyze_user_query_after_suggestion": """<INST>

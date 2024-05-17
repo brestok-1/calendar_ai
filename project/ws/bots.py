@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from project.bot.calendar_apis import send_planned_events_to_google_calendar
 from project.bot.models import Chat, Message
+from project.bot.utils import format_datetime
 from project.config import settings
 from project.ws.openai_requests import extract_parameters_from_user_query, is_enough_parameters, \
     generate_events_json_from_parameters, generate_next_question, analyze_user_query_after_plan_suggestion
@@ -56,12 +57,11 @@ class PredictionBot(Bot):
             }
         ]
 
-        response = await self._process_completion_output(messages=messages, model="gpt-4o", is_json=True)
-        response = json.loads(response)
-        response['type'] = 'asking'
+        response = await self._process_completion_output(messages=messages, model="gpt-4o")
+        response = {"data": {"text": response}, 'type': 'messaging'}
         await websocket.send_json(response)
 
-        assistant_message = {"role": 'assistant', 'content': response['text']}
+        assistant_message = {"role": 'assistant', 'content': response['data']['text']}
         self.chat_history.append(assistant_message)
 
     async def process_user_input(self,
@@ -71,25 +71,44 @@ class PredictionBot(Bot):
                                  ) -> None:
 
         query = data['text']
-        self.chat_history.append({'role': "user", 'content': query})
         assistant_question = self.chat_history[-1]['content']
+        self.chat_history.append({'role': "user", 'content': query})
 
         if self.CURRENT_STATE == PlannerStateSchema.ASKING_QUESTIONS:
             extracted_parameters = await extract_parameters_from_user_query(assistant_question, query)
             self.retrieved_parameters.update(extracted_parameters)
 
-            is_enough = self.question_count == 10
+            is_enough = self.question_count == 5
             # is_enough = await is_enough_parameters(self.retrieved_parameters)
             if is_enough:
-                events_json = await generate_events_json_from_parameters(self.retrieved_parameters, self.today, self.timezone)
-                self.planned_events = events_json
+                events_json = await generate_events_json_from_parameters(self.retrieved_parameters, self.today,
+                                                                         self.timezone)
+                self.planned_events = events_json['events']
+                result_str = ''
+                for i, event in enumerate(events_json['events']):
+                    result_str += f'{i + 1} event:\n'
+                    summary = event.get('summary')
+                    if summary:
+                        result_str += f'Summary: {summary}\n'
+                    description = event.get('description')
+                    if description:
+                        result_str += f'Description: {description}\n'
+                    start = event['start'].get('dateTime', event['start'].get('date'))
+                    end = event['end'].get('dateTime', event['end'].get('date'))
+
+                    formatted_start = format_datetime(start)
+                    formatted_end = format_datetime(end)
+
+                    result_str += f'Start Date: {formatted_start}\n'
+                    result_str += f'End Date: {formatted_end}\n\n'
+
                 self.CURRENT_STATE = PlannerStateSchema.SUGGESTING_PLAN
                 await websocket.send_json(
                     {
                         "type": "suggestion",
                         "data": {
                             "text": "Hey! Look at what future events I've managed to plan for you:",
-                            "events": events_json
+                            "events": result_str
                         }
                     }
                 )

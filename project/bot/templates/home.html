@@ -36,11 +36,6 @@
                     </div>
                 </div>
                 <div class="chat-body" id="chatBody">
-                    <div class="message">
-                        <div class="bot_message mt-4 py-3 px-4 rounded-4 w-75 ms-3">
-                            Hi! I'm your virtual assistant on Google Calendar. I can remind you of upcoming events, add an event, or predict the next one.
-                        </div>
-                    </div>
                 </div>
                 <div class="chat-footer px-3 mb-2 bg-white pt-3" id="chatFooter">
                     <input type="text" class="form-control rounded-5" id="textInput"
@@ -70,6 +65,14 @@
 <!--<script type="text/javascript" src="../../../static/js/main.js"></script>-->
 <!--<script type="text/javascript" src="../../../static/js/utils.js"></script>-->
 <!--<script type="text/javascript" src="../../../static/js/ws.js"></script>-->
+<script type="application/json" id="credentials-json">
+        {{ credentials | safe }}
+</script>
+
+<script>
+        // Парсинг данных из встроенного тега script
+        const credentials = document.getElementById('credentials-json').textContent
+</script>
 <script type="text/javascript" src="{{ url_for('static', path='/js/main.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('static', path='/js/utils.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('static', path='/js/ws.js') }}"></script>

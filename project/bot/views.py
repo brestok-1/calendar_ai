@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 
 from fastapi import Depends
@@ -23,7 +24,9 @@ template = Jinja2Templates(directory='project/bot/templates')
 async def main(request: Request, user_data=Depends(get_current_user)):
     if isinstance(user_data, RedirectResponse):
         return user_data
-    return template.TemplateResponse("home.html", {'request': request})
+    credentials = request.session.get('credentials')
+    credentials = json.loads(credentials)
+    return template.TemplateResponse("home.html", {'request': request, 'credentials': credentials})
 
 
 @bot_router.post("/message/create")
